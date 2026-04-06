@@ -1,0 +1,32 @@
+name: stock-trader-env
+version: "1.0.0"
+description: >
+  A real-world RL environment where LLM agents learn to trade a portfolio
+  of 5 tech stocks (AAPL, GOOGL, MSFT, TSLA, AMZN) over simulated 30-day episodes.
+
+environment:
+  id: stock-trader-v1
+  tags: [finance, trading, rl, llm-agent]
+
+action_space:
+  type: discrete
+  description: "BUY | SELL | HOLD for each of 5 tickers, quantity 1–10"
+
+observation_space:
+  description: "5-day OHLCV candles + sentiment score + portfolio state"
+
+reward:
+  description: "Change in total portfolio value per step"
+
+episode:
+  max_steps: 30
+  starting_cash: 10000.0
+
+server:
+  dockerfile: server/Dockerfile
+  port: 7860
+  endpoints:
+    - POST /reset
+    - POST /step
+    - GET  /state
+    - WS   /ws
