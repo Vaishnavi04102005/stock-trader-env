@@ -1,0 +1,33 @@
+# ── Stock Trader OpenEnv — Dockerfile ──────────────────────────────────────
+# Hugging Face Spaces Docker SDK builds this automatically.
+# Local test:
+#   docker build -t stock-trader-env:latest -f server/Dockerfile .
+#   docker run -p 7860:7860 \
+#     -e API_BASE_URL=https://router.huggingface.co/v1 \
+#     -e MODEL_NAME=meta-llama/Meta-Llama-3-8B-Instruct \
+#     -e HF_TOKEN=hf_xxx \
+#     stock-trader-env:latest
+
+FROM python:3.11-slim
+
+# Create non-root user (HF Spaces best practice)
+RUN useradd -m -u 1000 user
+USER user
+ENV HOME=/home/user \
+    PATH=/home/user/.local/bin:$PATH
+
+WORKDIR /home/user/app
+
+# Copy dependency files first for layer caching
+COPY --chown=user server/requirements.txt ./server/requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r server/requirements.txt
+
+# Copy all project files
+COPY --chown=user . .
+
+# HF Spaces always uses port 7860
+EXPOSE 7860
+
+# Start FastAPI via uvicorn
+CMD ["python", "-m", "uvicorn", "server.app:app", "--host", "0.0.0.0", "--port", "7860"]
